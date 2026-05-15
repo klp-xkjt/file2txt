@@ -2,6 +2,13 @@
 name = "file2txt"
 version = "0.1.0"
 edition = "2024"
+description = "将目录下所有文本文件内容聚合到一个文件"
+license = "MIT"
+repository = "https://github.com/klp-xkjt/file2txt"
+
+[[bin]]
+name = "file2txt"
+path = "src/main.rs"
 
 [dependencies]
 walkdir = "2"
