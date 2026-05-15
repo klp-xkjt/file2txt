@@ -1,6 +1,7 @@
 mod filter_config;
 pub use filter_config::*;
 use std::fs;
+use walkdir::WalkDir;
 
 #[derive(Debug)]
 pub struct File {
@@ -28,3 +29,30 @@ impl File {
     }
 }
 
+pub fn collect_files(filter: &FilterConfig) -> Result<Vec<File>, std::io::Error> {
+    let mut files = Vec::new();
+    
+    for entry in WalkDir::new(".") {
+        let entry = entry?;
+        if filter.should_process(&entry) {
+            if let Ok(file) = File::from_path(entry.path()) {
+                files.push(file);
+            }
+        }
+    }
+    
+    Ok(files)
+}
+
+pub fn write_bundle(files: &[File], output_path: &str) -> Result<(), std::io::Error> {
+    use std::io::Write;
+    let mut output = std::fs::File::create(output_path)?;
+    
+    for file in files {
+        writeln!(output, "--- {} ---", file.name)?;
+        writeln!(output, "{}", file.content)?;
+        writeln!(output)?;
+    }
+    
+    Ok(())
+}
