@@ -1,8 +1,25 @@
 mod filter_config;
 pub use filter_config::*;
+
 use std::fs;
 use std::io::Write;
+use std::error::Error;
+use std::path::Path;
 use walkdir::WalkDir;
+
+pub struct CollectStats {
+    pub all_processed: usize, // 总扫描的数量
+    pub included: usize, // 最终包含的文件数量
+    pub excluded_by_ext: usize, // 以后缀排除的文件数
+    pub excluded_by_dir: usize, // 以目录排除的文件数
+    pub excluded_by_size: usize, // 以文件大小排除的文件数
+    pub exclude_by_not_file: usize // 排除的二进制文件或其他不是文件的数量
+}
+impl Default for CollectStats {
+    fn default() -> Self {
+        Self { all_processed: 0, included: 0, excluded_by_ext: 0, excluded_by_dir: 0, excluded_by_size: 0, exclude_by_not_file: 0}
+    }
+}
 
 #[derive(Debug)]
 pub struct File {
@@ -15,12 +32,12 @@ impl File {
         Self { name, content, dir }
     }
     // 通过文件路径来创建 File
-    pub fn from_path(path: &std::path::Path) -> Result<Self, std::io::Error> {
+    pub fn from_path(path: &Path) -> Result<Self, Box<dyn Error>> {
         let name = path.to_string_lossy().to_string();
         // let content = fs::read_to_string(path)?;
         let content = match fs::read_to_string(path) {
             Ok(c) => c,
-            Err(e) => return Err(e)
+            Err(e) => return Err(Box::new(e))
         };
         let dir = path.parent().unwrap_or_else(|| path).to_string_lossy().to_string();
         Ok(Self {
@@ -32,25 +49,42 @@ impl File {
 }
 
 // 用 Walkdir 循环递归目录，返回 Result
-pub fn collect_files(filter: &FilterConfig) -> Result<Vec<File>, std::io::Error> {
+pub fn collect_files(filter: &FilterConfig) -> Result<(Vec<File>, CollectStats), Box<dyn Error>> {
     let mut files = Vec::new();
+    let mut stats = CollectStats::default();
     
-    for entry in WalkDir::new(".") {
+    for entry in WalkDir::new(".") {        
         let entry = entry?;
-        // 判断可以添加进 Vector 的 File
-        if filter.should_process(&entry) {
-            if let Ok(file) = File::from_path(entry.path()) {
-                files.push(file);
+        stats.all_processed += 1;
+
+        match filter.decide(&entry) {
+            FilterDecision::Keep => {
+                if let Ok(file) = File::from_path(entry.path()) {
+                    files.push(file);
+                    stats.included += 1;
+                }
+            },
+            FilterDecision::ExcludeDir => {
+                stats.excluded_by_dir += 1;
+            },
+            FilterDecision::ExcludeExt => {
+                stats.excluded_by_ext += 1;
+            },
+            FilterDecision::ExcludeSize => {
+                stats.excluded_by_size += 1;
+            },
+            FilterDecision::ExcludeNotFile => {
+                stats.exclude_by_not_file += 1;
             }
         }
     }
     
-    Ok(files)
+    Ok((files, stats))
 }
 
 // 将 File 相关信息写入输出文件
-pub fn write_bundle(files: &[File], output_path: &str) -> Result<(), std::io::Error> {
-    let mut output = std::fs::File::create(output_path)?;
+pub fn write_bundle(files: &[File], output_path: &str) -> Result<(), Box<dyn Error>> {
+    let mut output = fs::File::create(output_path)?;
     
     for file in files {
         writeln!(output, "--- {} ---", file.name)?;

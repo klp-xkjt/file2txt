@@ -23,6 +23,15 @@ pub const DEFAULT_EXTENSIONS: &[&str] = &[
     "adoc", "asciidoc"
 ];
 
+// 过滤的类型
+pub enum FilterDecision {
+    Keep, // 保留
+    ExcludeDir, // 以目录排除
+    ExcludeExt, // 以后缀名排除
+    ExcludeSize, // 以文件大小排除
+    ExcludeNotFile, // 以是否为二进制或者非文件排除
+}
+
 pub struct FilterConfig {
     pub extensions: Vec<String>,
     pub exclude_dirs: Vec<String>,
@@ -38,38 +47,38 @@ impl FilterConfig {
         }
     }
     // 判断是否符合要求
-    pub fn should_process(&self, entry: &walkdir::DirEntry) -> bool {
+    pub fn decide(&self, entry: &walkdir::DirEntry) -> FilterDecision {
         let path = entry.path();
 
         // 判断是否为路径并排除
         if !entry.file_type().is_file() {
-            return false;
+            return FilterDecision::ExcludeNotFile;
         }
 
         // 判断是否为被忽略的目录并排除其中文件
         for exclude in &self.exclude_dirs {
             if path.components().any(|e| &e.as_os_str().to_string_lossy().to_string() == exclude) {
-                return false;
+                return FilterDecision::ExcludeDir;
             }
         }
         // 判断文件扩展名
         if !self.extensions.is_empty() {
             if let Some(ext) = path.extension().and_then(|x| x.to_str()) {
                 if !self.extensions.contains(&ext.to_string()) {
-                    return false;
+                    return FilterDecision::ExcludeExt;
                 }
             } else {
-                return false;
+                return FilterDecision::ExcludeExt;
             }
         }
         // 判断文件大小
         if self.max_size > 0 {
             if let Ok(meta) = entry.metadata() {
                 if meta.len() > self.max_size {
-                    return false;
+                    return FilterDecision::ExcludeSize;
                 }
             }
         }
-        true
+        FilterDecision::Keep
     }
 }
