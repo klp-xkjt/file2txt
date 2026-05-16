@@ -1,6 +1,7 @@
 mod filter_config;
 pub use filter_config::*;
 use std::fs;
+use std::io::Write;
 use walkdir::WalkDir;
 
 #[derive(Debug)]
@@ -13,6 +14,7 @@ impl File {
     pub fn new(name: String, content: String, dir: String) -> Self {
         Self { name, content, dir }
     }
+    // 通过文件路径来创建 File
     pub fn from_path(path: &std::path::Path) -> Result<Self, std::io::Error> {
         let name = path.to_string_lossy().to_string();
         // let content = fs::read_to_string(path)?;
@@ -29,11 +31,13 @@ impl File {
     }
 }
 
+// 用 Walkdir 循环递归目录，返回 Result
 pub fn collect_files(filter: &FilterConfig) -> Result<Vec<File>, std::io::Error> {
     let mut files = Vec::new();
     
     for entry in WalkDir::new(".") {
         let entry = entry?;
+        // 判断可以添加进 Vector 的 File
         if filter.should_process(&entry) {
             if let Ok(file) = File::from_path(entry.path()) {
                 files.push(file);
@@ -44,8 +48,8 @@ pub fn collect_files(filter: &FilterConfig) -> Result<Vec<File>, std::io::Error>
     Ok(files)
 }
 
+// 将 File 相关信息写入输出文件
 pub fn write_bundle(files: &[File], output_path: &str) -> Result<(), std::io::Error> {
-    use std::io::Write;
     let mut output = std::fs::File::create(output_path)?;
     
     for file in files {
