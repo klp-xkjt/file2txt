@@ -27,14 +27,17 @@ file2txt
 # 只收集 Rust 和 Markdown 文件
 file2txt -e rs,md
 
-# 限制文件大小，跳过大于 500KB 的
-file2txt -m 500
+# 限制文件大小，跳过大于 512KB 的
+file2txt -m 512
 
 # 自定义输出文件名
 file2txt -o analysis.txt
 
+# 指定排除自定义目录
+file2txt -d node_modules
+
 # 组合使用
-file2txt -e rs,toml -m 1024 -o code_bundle.txt
+file2txt -o allcode.txt -m 512 -e rs,toml
 ```
 
 ## 默认行为
