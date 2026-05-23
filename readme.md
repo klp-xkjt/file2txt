@@ -3,6 +3,16 @@
 将当前目录下的所有文本文件内容聚合到一个文件，方便喂给 AI 分析或代码审查。
 
 ## 安装
+
+### 方式一：下载预编译版本（推荐）
+
+1. 访问 [Releases](https://github.com/klp-xkjt/file2txt/releases) 页面
+2. 下载 `file2txt.exe`
+3. **（推荐）** 保持原文件名 `file2txt.exe` 以便使用
+4. 将文件放入 PATH 目录
+
+### 方式二：通过 cargo 安装（需要 Rust 环境）
+
 ```bash
 cargo install file2txt
 ```
