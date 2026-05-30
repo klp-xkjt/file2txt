@@ -1,10 +1,9 @@
 use crate::CollectStats;
 use crate::File;
 
-use serde::Serialize;
 use serde_json;
-use std::path::Path;
 use std::error::Error;
+use std::path::Path;
 
 // 文件输出格式
 pub enum OutputFormat {
@@ -12,16 +11,6 @@ pub enum OutputFormat {
     Meta,     // 带有文件元信息的输出
     Markdown, // Markdown 格式输出
     Json,     // Json 格式输出
-}
-
-// 文件元信息
-#[derive(Debug, Serialize)]
-pub struct FileMeta {
-    pub name: String,    // 文件路径
-    pub content: String, // 文件内容
-    pub size: usize,     // 文件大小（字节）
-    pub lines: usize,    // 行数
-    pub ext: String,     // 扩展名
 }
 
 pub struct OutputConfig {
@@ -38,12 +27,16 @@ impl Default for OutputConfig {
     }
 }
 
-pub fn generate_output(files: &[File], stats: &CollectStats, config: &OutputConfig) -> Result<String, Box<dyn Error>> {
+pub fn generate_output(
+    files: &[File],
+    stats: &CollectStats,
+    config: &OutputConfig,
+) -> Result<String, Box<dyn Error>> {
     match config.format {
         OutputFormat::Normal => Ok(generate_normal_output(files)),
         OutputFormat::Meta => Ok(generate_meta_output(files, stats)),
         OutputFormat::Markdown => Ok(generate_markdown_output(files, stats)),
-        OutputFormat::Json => generate_json_output(files, stats, config.pretty_json)
+        OutputFormat::Json => generate_json_output(files, stats, config.pretty_json),
     }
 }
 
@@ -81,7 +74,7 @@ fn generate_meta_output(files: &[File], stats: &CollectStats) -> String {
             size, lines, ext
         ));
         output.push_str(&format!("--- {} ---\n", file.name));
-        
+
         output.push_str(&file.content);
         output.push_str("\n\n");
     }
@@ -89,7 +82,11 @@ fn generate_meta_output(files: &[File], stats: &CollectStats) -> String {
     output
 }
 
-fn generate_json_output(files: &[File], stats: &CollectStats, pretty: bool) -> Result<String, Box<dyn Error>> {
+fn generate_json_output(
+    files: &[File],
+    stats: &CollectStats,
+    pretty: bool,
+) -> Result<String, Box<dyn Error>> {
     let data = serde_json::json!({
         "stats": {
             "all_processed": stats.all_processed,
@@ -116,37 +113,36 @@ fn generate_json_output(files: &[File], stats: &CollectStats, pretty: bool) -> R
 
 fn generate_markdown_output(files: &[File], stats: &CollectStats) -> String {
     let mut output = String::new();
-    
+
     // 标题
     output.push_str("# 代码汇总\n\n");
-    
+
     // 统计信息
     output.push_str("## 📊 统计信息\n\n");
     output.push_str(&format!("- **扫描总数**: {}\n", stats.all_processed));
     output.push_str(&format!("- **包含文件**: {}\n", stats.included));
-    output.push_str(&format!("- **排除总数**: {}\n\n", stats.all_processed - stats.included));
+    output.push_str(&format!(
+        "- **排除总数**: {}\n\n",
+        stats.all_processed - stats.included
+    ));
     output.push_str("---\n\n");
-    
+
     // 目录
     output.push_str("## 📑 目录\n\n");
     for (i, file) in files.iter().enumerate() {
-        let display_name = file.name
-            .trim_start_matches(".\\")
-            .trim_start_matches("./");
+        let display_name = file.name.trim_start_matches(".\\").trim_start_matches("./");
         output.push_str(&format!("{}. [{}](#file-{})\n", i + 1, display_name, i));
     }
     output.push_str("\n---\n\n");
-    
+
     // 文件内容（使用 HTML div 包裹）
     for (i, file) in files.iter().enumerate() {
-        let display_name = file.name
-            .trim_start_matches(".\\")
-            .trim_start_matches("./");
+        let display_name = file.name.trim_start_matches(".\\").trim_start_matches("./");
         let ext = Path::new(&file.name)
             .extension()
             .and_then(|e| e.to_str())
             .unwrap_or("");
-        
+
         // 使用 div 作为锚点容器
         output.push_str(&format!("<div id=\"file-{}\"></div>\n\n", i));
         output.push_str(&format!("## 📄 {}\n\n", display_name));
@@ -157,6 +153,6 @@ fn generate_markdown_output(files: &[File], stats: &CollectStats) -> String {
         }
         output.push_str("```\n\n");
     }
-    
+
     output
 }

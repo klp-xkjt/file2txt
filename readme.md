@@ -32,6 +32,8 @@ file2txt
 | `-m, --max-size` | 最大文件大小，单位 KB（默认：1024） | `file2txt -m 1024` |
 | `-d, --exclude_dirs` | 指定排除哪些目录（命令运行的同级目录）(逗号分隔，例如 --exclude_dirs .git,node_modules,target) 不指定时默认排除 .git node_modules target | `file2txt -d target` |
 | `-f, --format` | 指定输出文件格式：normal(默认), meta(带有元数据的), markdown(Markdown格式), json(Json格式) | `file2txt -f meta` |
+| `-p,  --path` | 指定遍历目录，默认为当前目录| `file2txt -p D:\my_project` |
+| `-t,  --to-path` | 指定输出目录，默认在遍历的目录（即 path 目录）| `file2txt -t D:\backup` |
 
 
 ## 使用示例
@@ -52,8 +54,14 @@ file2txt -d node_modules
 # 指定输出文件格式
 file2txt -f markdown
 
+# 指定遍历目录
+file2txt -p E:\Rust\my_project
+
+# 指定输出目录
+file2txt -t D:\backup
+
 # 组合使用
-file2txt -o my_code_backup.md -m 512 -e rs,toml,md -f markdown
+file2txt -o my_code_backup.md -m 512 -e rs,toml,md -f markdown -p E:\Rust\my_project -t D:\backup
 ```
 
 ## 默认行为
@@ -64,6 +72,7 @@ file2txt -o my_code_backup.md -m 512 -e rs,toml,md -f markdown
 - 跳过大于 1MB 的文件（除非用 `-m` 调整）
 - 输出格式默认为 normal
 - 读取出错的文件自动跳过，不影响继续执行
+- 输出的文件位置默认为指定遍历目录的位置
 
 ## 输出格式
 

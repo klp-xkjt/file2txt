@@ -2,9 +2,9 @@
 
 ## 📊 统计信息
 
-- **扫描总数**: 11
+- **扫描总数**: 12
 - **包含文件**: 5
-- **排除总数**: 6
+- **排除总数**: 7
 
 ---
 
@@ -25,7 +25,7 @@
 ```toml
 [package]
 name = "file2txt"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2024"
 description = "将目录下所有文本文件内容聚合到一个文件"
 license = "MIT"
@@ -301,14 +301,6 @@ impl FilterConfig {
             return FilterDecision::ExcludeNotFile;
         }
 
-        // 已废除，请使用FilterConfig的should_skip_dir方法。
-        // 判断是否为被忽略的目录并排除其中文件
-        // for exclude in &self.exclude_dirs {
-        //     if path.components().any(|e| &e.as_os_str().to_string_lossy().to_string() == exclude) {
-        //         return FilterDecision::ExcludeDir;
-        //     }
-        // }
-
         // 判断文件扩展名
         if !self.extensions.is_empty() {
             if let Some(ext) = path.extension().and_then(|x| x.to_str()) {
@@ -353,7 +345,6 @@ pub struct CollectStats {
     pub all_processed: usize,       // 总扫描的数量
     pub included: usize,            // 最终包含的文件数量
     pub excluded_by_ext: usize,     // 以后缀排除的文件数
-    pub excluded_by_dir: usize,     // 以目录排除的文件数
     pub excluded_by_size: usize,    // 以文件大小排除的文件数
     pub exclude_by_not_file: usize, // 排除的二进制文件或其他不是文件的数量
 }
@@ -363,7 +354,6 @@ impl Default for CollectStats {
             all_processed: 0,
             included: 0,
             excluded_by_ext: 0,
-            excluded_by_dir: 0,
             excluded_by_size: 0,
             exclude_by_not_file: 0,
         }
@@ -397,12 +387,23 @@ impl File {
     }
 }
 
-// 用 Walkdir 循环递归目录，返回 Result
+// 旧方法，从当前目录开始遍历
 pub fn collect_files(filter: &FilterConfig) -> Result<(Vec<File>, CollectStats), Box<dyn Error>> {
+    collect_files_in(".", filter)
+}
+
+// 支持自定义输入目录，用 Walkdir 循环递归目录，返回 Result
+pub fn collect_files_in<P>(
+    root: P,
+    filter: &FilterConfig,
+) -> Result<(Vec<File>, CollectStats), Box<dyn Error>>
+where
+    P: AsRef<Path>,
+{
     let mut files = Vec::new();
     let mut stats = CollectStats::default();
 
-    let walkdir = WalkDir::new(".")
+    let walkdir = WalkDir::new(root)
         .into_iter()
         .filter_entry(|e| !filter.should_skip_dir(e.path()));
 
@@ -426,7 +427,7 @@ pub fn collect_files(filter: &FilterConfig) -> Result<(Vec<File>, CollectStats),
             FilterDecision::ExcludeNotFile => {
                 stats.exclude_by_not_file += 1;
             }
-            _ => {} // ExcludeDir 不会出现
+            _ => {}
         }
     }
 
@@ -434,6 +435,7 @@ pub fn collect_files(filter: &FilterConfig) -> Result<(Vec<File>, CollectStats),
 }
 
 // 将 File 相关信息写入输出文件
+// 此函数已不再CLI使用
 pub fn write_bundle(files: &[File], output_path: &str) -> Result<(), Box<dyn Error>> {
     let mut output = fs::File::create(output_path)?;
 
@@ -453,8 +455,8 @@ pub fn write_bundle(files: &[File], output_path: &str) -> Result<(), Box<dyn Err
 
 ```rs
 use clap::Parser;
+use file2txt::*;
 use std::fs;
-use file2txt::{collect_files, generate_output, CollectStats, File, FilterConfig, OutputConfig, OutputFormat, DEFAULT_EXTENSIONS};
 
 #[derive(Parser)]
 struct Cli {
@@ -477,8 +479,16 @@ struct Cli {
     exclude_dirs: Option<Vec<String>>,
 
     /// 指定输出文件格式：normal(默认), meta(带有元数据的), markdown(Markdown格式), json(Json格式)
-    #[arg(short='f', long, default_value = "normal")]
+    #[arg(short = 'f', long, default_value = "normal")]
     format: String,
+
+    /// 指定遍历目录，默认为当前目录
+    #[arg(short = 'p', long, default_value = ".")]
+    path: String,
+
+    /// 指定输出目录，默认在遍历的目录（即 path 目录）
+    #[arg(short = 't', long)]
+    to_path: Option<String>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -498,13 +508,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let output_config = OutputConfig {
         format,
-        pretty_json: true
+        pretty_json: true,
     };
 
+    // 解析过滤后缀
     let extensions = match cli.extensions {
         Some(exts) => exts, // 用户指定了，用用户的
         None => DEFAULT_EXTENSIONS.iter().map(|s| s.to_string()).collect(), // 用户没指定，用默认的
     };
+
+    // 解析过滤目录
     let exclude_dirs = match cli.exclude_dirs {
         Some(exc) => exc,
         None => vec![
@@ -514,21 +527,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ],
     };
 
+    // 获得过滤后信息统计
     let filter = FilterConfig {
         extensions,
         exclude_dirs,
         max_size: cli.max_size * 1024,
     };
-    let (files, stats): (Vec<File>, CollectStats) = collect_files(&filter)?;
+    let (files, stats) = collect_files_in(&cli.path, &filter)?;
+
     println!("📊 统计信息:");
-    println!("    扫描总数: {}", stats.all_processed);
-    println!("    包含文件: {}", stats.included);
-    println!("    排除总数: {}", stats.all_processed - stats.included);
     println!(
-        "    ├─ 已跳过目录: {} ({})",
+        "    已跳过目录: {} ({})",
         filter.exclude_dirs.len(),
         filter.exclude_dirs.join(", ")
     );
+    println!("    扫描总数: {}", stats.all_processed);
+    println!("    包含文件: {}", stats.included);
+    println!("    排除总数: {}", stats.all_processed - stats.included);
     println!("    ├─ 扩展名排除: {}", stats.excluded_by_ext);
     println!(
         "    ├─ 大小排除 (>{}KB): {}",
@@ -536,11 +551,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     println!("    └─ 二进制或非文件: {}", stats.exclude_by_not_file);
 
+    use std::path::Path;
+    let output = match cli.to_path {
+        Some(path) => path,
+        None => cli.path,
+    };
+
+    // 构建输出路径：to_path + 基本文件名
+    let output_path = Path::new(&output).join(&cli.output);
+    let output_path_str = output_path.to_string_lossy().to_string();
 
     let content = generate_output(&files, &stats, &output_config)?;
-    fs::write(&cli.output, content)?;
-    
-    println!("\n✅ 已保存到: {}", cli.output);
+    fs::write(&output_path_str, content)?;
+    println!("\n✅ 已保存到: {}", output_path_str);
+
     Ok(())
 }
 ```
@@ -553,10 +577,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 use crate::CollectStats;
 use crate::File;
 
-use serde::Serialize;
 use serde_json;
-use std::path::Path;
 use std::error::Error;
+use std::path::Path;
 
 // 文件输出格式
 pub enum OutputFormat {
@@ -564,16 +587,6 @@ pub enum OutputFormat {
     Meta,     // 带有文件元信息的输出
     Markdown, // Markdown 格式输出
     Json,     // Json 格式输出
-}
-
-// 文件元信息
-#[derive(Debug, Serialize)]
-pub struct FileMeta {
-    pub name: String,    // 文件路径
-    pub content: String, // 文件内容
-    pub size: usize,     // 文件大小（字节）
-    pub lines: usize,    // 行数
-    pub ext: String,     // 扩展名
 }
 
 pub struct OutputConfig {
@@ -590,12 +603,16 @@ impl Default for OutputConfig {
     }
 }
 
-pub fn generate_output(files: &[File], stats: &CollectStats, config: &OutputConfig) -> Result<String, Box<dyn Error>> {
+pub fn generate_output(
+    files: &[File],
+    stats: &CollectStats,
+    config: &OutputConfig,
+) -> Result<String, Box<dyn Error>> {
     match config.format {
         OutputFormat::Normal => Ok(generate_normal_output(files)),
         OutputFormat::Meta => Ok(generate_meta_output(files, stats)),
         OutputFormat::Markdown => Ok(generate_markdown_output(files, stats)),
-        OutputFormat::Json => generate_json_output(files, stats, config.pretty_json)
+        OutputFormat::Json => generate_json_output(files, stats, config.pretty_json),
     }
 }
 
@@ -633,7 +650,7 @@ fn generate_meta_output(files: &[File], stats: &CollectStats) -> String {
             size, lines, ext
         ));
         output.push_str(&format!("--- {} ---\n", file.name));
-        
+
         output.push_str(&file.content);
         output.push_str("\n\n");
     }
@@ -641,7 +658,11 @@ fn generate_meta_output(files: &[File], stats: &CollectStats) -> String {
     output
 }
 
-fn generate_json_output(files: &[File], stats: &CollectStats, pretty: bool) -> Result<String, Box<dyn Error>> {
+fn generate_json_output(
+    files: &[File],
+    stats: &CollectStats,
+    pretty: bool,
+) -> Result<String, Box<dyn Error>> {
     let data = serde_json::json!({
         "stats": {
             "all_processed": stats.all_processed,
@@ -668,37 +689,36 @@ fn generate_json_output(files: &[File], stats: &CollectStats, pretty: bool) -> R
 
 fn generate_markdown_output(files: &[File], stats: &CollectStats) -> String {
     let mut output = String::new();
-    
+
     // 标题
     output.push_str("# 代码汇总\n\n");
-    
+
     // 统计信息
     output.push_str("## 📊 统计信息\n\n");
     output.push_str(&format!("- **扫描总数**: {}\n", stats.all_processed));
     output.push_str(&format!("- **包含文件**: {}\n", stats.included));
-    output.push_str(&format!("- **排除总数**: {}\n\n", stats.all_processed - stats.included));
+    output.push_str(&format!(
+        "- **排除总数**: {}\n\n",
+        stats.all_processed - stats.included
+    ));
     output.push_str("---\n\n");
-    
+
     // 目录
     output.push_str("## 📑 目录\n\n");
     for (i, file) in files.iter().enumerate() {
-        let display_name = file.name
-            .trim_start_matches(".\\")
-            .trim_start_matches("./");
+        let display_name = file.name.trim_start_matches(".\\").trim_start_matches("./");
         output.push_str(&format!("{}. [{}](#file-{})\n", i + 1, display_name, i));
     }
     output.push_str("\n---\n\n");
-    
+
     // 文件内容（使用 HTML div 包裹）
     for (i, file) in files.iter().enumerate() {
-        let display_name = file.name
-            .trim_start_matches(".\\")
-            .trim_start_matches("./");
+        let display_name = file.name.trim_start_matches(".\\").trim_start_matches("./");
         let ext = Path::new(&file.name)
             .extension()
             .and_then(|e| e.to_str())
             .unwrap_or("");
-        
+
         // 使用 div 作为锚点容器
         output.push_str(&format!("<div id=\"file-{}\"></div>\n\n", i));
         output.push_str(&format!("## 📄 {}\n\n", display_name));
@@ -709,7 +729,7 @@ fn generate_markdown_output(files: &[File], stats: &CollectStats) -> String {
         }
         output.push_str("```\n\n");
     }
-    
+
     output
 }
 ```

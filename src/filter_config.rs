@@ -250,14 +250,6 @@ impl FilterConfig {
             return FilterDecision::ExcludeNotFile;
         }
 
-        // 已废除，请使用FilterConfig的should_skip_dir方法。
-        // 判断是否为被忽略的目录并排除其中文件
-        // for exclude in &self.exclude_dirs {
-        //     if path.components().any(|e| &e.as_os_str().to_string_lossy().to_string() == exclude) {
-        //         return FilterDecision::ExcludeDir;
-        //     }
-        // }
-
         // 判断文件扩展名
         if !self.extensions.is_empty() {
             if let Some(ext) = path.extension().and_then(|x| x.to_str()) {

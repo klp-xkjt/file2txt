@@ -14,7 +14,6 @@ pub struct CollectStats {
     pub all_processed: usize,       // 总扫描的数量
     pub included: usize,            // 最终包含的文件数量
     pub excluded_by_ext: usize,     // 以后缀排除的文件数
-    pub excluded_by_dir: usize,     // 以目录排除的文件数
     pub excluded_by_size: usize,    // 以文件大小排除的文件数
     pub exclude_by_not_file: usize, // 排除的二进制文件或其他不是文件的数量
 }
@@ -24,7 +23,6 @@ impl Default for CollectStats {
             all_processed: 0,
             included: 0,
             excluded_by_ext: 0,
-            excluded_by_dir: 0,
             excluded_by_size: 0,
             exclude_by_not_file: 0,
         }
@@ -58,12 +56,23 @@ impl File {
     }
 }
 
-// 用 Walkdir 循环递归目录，返回 Result
+// 旧方法，从当前目录开始遍历
 pub fn collect_files(filter: &FilterConfig) -> Result<(Vec<File>, CollectStats), Box<dyn Error>> {
+    collect_files_in(".", filter)
+}
+
+// 支持自定义输入目录，用 Walkdir 循环递归目录，返回 Result
+pub fn collect_files_in<P>(
+    root: P,
+    filter: &FilterConfig,
+) -> Result<(Vec<File>, CollectStats), Box<dyn Error>>
+where
+    P: AsRef<Path>,
+{
     let mut files = Vec::new();
     let mut stats = CollectStats::default();
 
-    let walkdir = WalkDir::new(".")
+    let walkdir = WalkDir::new(root)
         .into_iter()
         .filter_entry(|e| !filter.should_skip_dir(e.path()));
 
@@ -87,7 +96,7 @@ pub fn collect_files(filter: &FilterConfig) -> Result<(Vec<File>, CollectStats),
             FilterDecision::ExcludeNotFile => {
                 stats.exclude_by_not_file += 1;
             }
-            _ => {} // ExcludeDir 不会出现
+            _ => {}
         }
     }
 
@@ -95,6 +104,7 @@ pub fn collect_files(filter: &FilterConfig) -> Result<(Vec<File>, CollectStats),
 }
 
 // 将 File 相关信息写入输出文件
+// 此函数已不再CLI使用
 pub fn write_bundle(files: &[File], output_path: &str) -> Result<(), Box<dyn Error>> {
     let mut output = fs::File::create(output_path)?;
 
