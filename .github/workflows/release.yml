@@ -1,0 +1,87 @@
+name: Release
+
+run-name: ${{github.actor}} is learning GitHub Actions
+
+on:
+    push:
+        tags: 
+            - "v*"
+        branches: ["main"]
+    pull_request:
+        branches: ["main"]
+
+permissions:
+    contents: write
+
+env:
+  CRATE_NAME: file2txt
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-and-release:
+    name: 构建 ${{matrix.target}}
+    runs-on: ${{matrix.os}}
+    
+    strategy: 
+        fail-fast: false
+        matrix:
+            include:
+              - os: ubuntu-latest
+                target: x86_64-unknown-linux-gnu
+                asset_name: actions-test-linux-x86_64
+
+              - os: macos-latest
+                target: x86_64-apple-darwin
+                asset_name: actions-test-apple-x86_64
+
+              - os: windows-latest
+                target: x86_64-pc-windows-msvc
+                asset_name: actions-test-windows-x86_64.exe
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4  # v6 不存在，改回 v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with: 
+            targets: ${{matrix.target}}
+
+      - name: ⚡ 缓存 cargo 依赖
+        uses: actions/cache@v4
+        with:
+            path: |
+              ~/.cargo/registry
+              ~/.cargo/git
+              target
+            # ↑ 关键：path 的块在这里结束
+            key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            # 建议加上 **/ 来匹配任何位置的 Cargo.lock
+            restore-keys: |
+              ${{ runner.os }}-cargo-
+
+      - name: Cargo Check
+        run: cargo check --target ${{matrix.target}}
+
+      - name: Build Release  # 改名更清晰
+        run: cargo build --release --target ${{matrix.target}}  # 改：build 不是 run
+    
+      - name: 准备产物
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            SRC="target/${{ matrix.target }}/release/${{ env.CRATE_NAME }}.exe"
+          else
+            SRC="target/${{ matrix.target }}/release/${{ env.CRATE_NAME }}"
+          fi
+          cp "$SRC" "${{ matrix.asset_name }}"
+          echo "✅ 产物已准备: ${{ matrix.asset_name }}"
+
+      - name: 上传到 Release
+        uses: softprops/action-gh-release@v1
+        with:
+            files: ${{ matrix.asset_name }}
+            draft: false
+            prerelease: false
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

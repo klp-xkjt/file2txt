@@ -7,14 +7,29 @@
 ### 方式一：下载预编译版本（推荐）
 
 1. 访问 [Releases](https://github.com/klp-xkjt/file2txt/releases) 页面
-2. 下载 `file2txt.exe`
-3. **（推荐）** 保持原文件名 `file2txt.exe` 以便使用
+2. 根据你的操作系统下载对应文件：
+
+| 操作系统 | 下载文件 |
+|---------|---------|
+| Windows (64位) | `file2txt-windows-x86_64.exe` |
+| macOS (Intel) | `file2txt-apple-x86_64` |
+| Linux (64位) | `file2txt-linux-x86_64` |
+
+3. **（推荐）** 重命名为 `file2txt`（或 `file2txt.exe`）以便使用
 4. 将文件放入 PATH 目录
 
 ### 方式二：通过 cargo 安装（需要 Rust 环境）
 
 ```bash
 cargo install file2txt
+```
+
+### 方法三：从源码编译
+```bash
+git clone https://github.com/klp-xkjt/file2txt.git
+cd file2txt
+cargo build --release
+# 可执行文件在 target/release/ 目录下
 ```
 
 ## 快速开始
