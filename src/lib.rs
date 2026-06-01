@@ -16,6 +16,7 @@ pub struct CollectStats {
     pub excluded_by_ext: usize,     // 以后缀排除的文件数
     pub excluded_by_size: usize,    // 以文件大小排除的文件数
     pub exclude_by_not_file: usize, // 排除的二进制文件或其他不是文件的数量
+    pub exclude_by_name: usize //以文件名排除的文件数
 }
 impl Default for CollectStats {
     fn default() -> Self {
@@ -25,6 +26,7 @@ impl Default for CollectStats {
             excluded_by_ext: 0,
             excluded_by_size: 0,
             exclude_by_not_file: 0,
+            exclude_by_name: 0
         }
     }
 }
@@ -95,8 +97,11 @@ where
             }
             FilterDecision::ExcludeNotFile => {
                 stats.exclude_by_not_file += 1;
-            }
-            _ => {}
+            },
+            FilterDecision::ExcludeName => {
+                stats.exclude_by_name += 1
+            },
+            _ => ()
         }
     }
 

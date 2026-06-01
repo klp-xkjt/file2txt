@@ -1,0 +1,75 @@
+This is a sentence from file2txt-test/test1.txt.
+
+Run: 
+cargo run -- -o out.md -e txt -n file2txt-tests/never.txt,file2txt-tests/testdir/never.txt -f md
+
+# 代码汇总
+
+## 📊 统计信息
+
+- **扫描总数**: 27
+- **包含文件**: 5
+- **排除总数**: 22
+
+---
+
+## 📑 目录
+
+1. [.gitignore](#file-0)
+2. [file2txt-tests\test1.txt](#file-1)
+3. [License](#file-2)
+4. [TEST](#file-3)
+5. [TEST2](#file-4)
+
+---
+
+<div id="file-0"></div>
+
+## 📄 .gitignore
+
+```
+/target
+```
+
+<div id="file-1"></div>
+
+## 📄 file2txt-tests\test1.txt
+
+```txt
+This is a sentence from file2txt-test/test1.txt.
+
+Run: 
+cargo run -- -o out.md -e txt -n file2txt-tests/never.txt,file2txt-tests/testdir/never.txt -f md
+
+```
+
+<div id="file-2"></div>
+
+## 📄 License
+
+```
+Copyright © 2026 <klp-xkjt>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+```
+
+<div id="file-3"></div>
+
+## 📄 TEST
+
+```
+
+```
+
+<div id="file-4"></div>
+
+## 📄 TEST2
+
+```
+
+```
+

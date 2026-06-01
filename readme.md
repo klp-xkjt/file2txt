@@ -49,7 +49,7 @@ file2txt
 | `-f, --format` | 指定输出文件格式：normal(默认), meta(带有元数据的), markdown(Markdown格式), json(Json格式) | `file2txt -f meta` |
 | `-p,  --path` | 指定遍历目录，默认为当前目录| `file2txt -p D:\my_project` |
 | `-t,  --to-path` | 指定输出目录，默认在遍历的目录（即 path 目录）| `file2txt -t D:\backup` |
-
+| `-n,  --exclude-name` | 指定排除叫哪某个名字的文件 | `file2txt -n Cargo.lock` |
 
 ## 使用示例
 
@@ -63,8 +63,9 @@ file2txt -m 512
 # 自定义输出文件名
 file2txt -o analysis.txt
 
-# 指定排除自定义目录
+# 指定排除自定义目录，支持排除子目录
 file2txt -d node_modules
+file2txt -d src/temp
 
 # 指定输出文件格式
 file2txt -f markdown
@@ -75,8 +76,12 @@ file2txt -p E:\Rust\my_project
 # 指定输出目录
 file2txt -t D:\backup
 
+# 指定排除文件，支持排除子目录文件
+file2txt -n Cargo.lock
+file2txt -d tests/test0.rs
+
 # 组合使用
-file2txt -o my_code_backup.md -m 512 -e rs,toml,md -f markdown -p E:\Rust\my_project -t D:\backup
+file2txt -o my_code_backup.md -m 512 -e rs,toml,md -f markdown -p E:\Rust\my_project -t D:\backup -n License
 ```
 
 ## 默认行为

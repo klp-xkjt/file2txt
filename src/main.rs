@@ -17,10 +17,14 @@ struct Cli {
     #[arg(short = 'e', long, value_delimiter = ',')]
     extensions: Option<Vec<String>>,
 
-    /// 指定排除哪些目录（命令运行的同级目录）(逗号分隔，例如 --exclude_dirs .git,node_modules,target)
+    /// 指定排除哪些目录（支持排除同级目录和子目录）(逗号分隔，例如 --exclude_dirs .git,node_modules,target)
     /// 不指定时默认排除 .git node_modules target
     #[arg(short = 'd', long, value_delimiter = ',')]
     exclude_dirs: Option<Vec<String>>,
+
+    /// 指定排除叫哪某个名字的文件（逗号分隔，例如 -n License,Makefile）
+    #[arg(short = 'n', long, value_delimiter = ',')]
+    exclude_name: Option<Vec<String>>,
 
     /// 指定输出文件格式：normal(默认), meta(带有元数据的), markdown(Markdown格式), json(Json格式)
     #[arg(short = 'f', long, default_value = "normal")]
@@ -71,11 +75,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ],
     };
 
+    // 解析过滤文件名
+    let exclude_name = match cli.exclude_name {
+        Some(x) => x,
+        None => Vec::new()
+    };
+
     // 获得过滤后信息统计
     let filter = FilterConfig {
         extensions,
         exclude_dirs,
         max_size: cli.max_size * 1024,
+        exclude_names: exclude_name
     };
     let (files, stats) = collect_files_in(&cli.path, &filter)?;
 
@@ -93,6 +104,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "    ├─ 大小排除 (>{}KB): {}",
         cli.max_size, stats.excluded_by_size
     );
+    println!("    ├─ 名称排除: {}", stats.exclude_by_name);
     println!("    └─ 二进制或非文件: {}", stats.exclude_by_not_file);
 
     use std::path::Path;

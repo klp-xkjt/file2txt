@@ -1,0 +1,1 @@
+This sentence from file2txt-tests/testdir/never.txt will never be read.
