@@ -16,6 +16,7 @@ fn make_test_stats() -> CollectStats {
         excluded_by_ext: 5,
         excluded_by_size: 2,
         exclude_by_not_file: 1,
+        exclude_by_name: 0
     }
 }
 
