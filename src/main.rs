@@ -107,6 +107,9 @@ fn main() -> anyhow::Result<()> {
     println!("    ├─ 名称排除: {}", stats.exclude_by_name);
     println!("    └─ 二进制或非文件: {}", stats.exclude_by_not_file);
 
+    #[cfg(debug_assertions)]
+    let root_dir = cli.path.clone();
+
     use std::path::Path;
     let output = match cli.to_path {
         Some(path) => path,
@@ -122,5 +125,12 @@ fn main() -> anyhow::Result<()> {
     println!("\n✅ 已保存到: {}", output_path_str);
     println!("⏱ 耗时: {:.2?}", start.elapsed());
 
+    #[cfg(debug_assertions)]
+    {
+        let groups = group_by_top_dir(files, Path::new(&root_dir));
+        for group in &groups {
+            println!("📁 {}: {} 个文件", group.name, group.files.len());
+        }
+    }
     Ok(())
 }

@@ -6,6 +6,7 @@ mod error;
 pub use error::*;
 
 use rayon::prelude::*;
+use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
@@ -53,6 +54,47 @@ impl File {
             .to_string_lossy()
             .to_string();
         Ok(Self { name, content, dir })
+    }
+}
+
+#[derive(Debug)]
+pub struct FileGroup {
+    pub name: String,
+    pub files: Vec<File>,
+}
+
+pub fn group_by_top_dir(files: Vec<File>, root: &Path) -> Vec<FileGroup> {
+    let mut groups: HashMap<String, Vec<File>> = HashMap::new();
+
+    for file in files {
+        let group_name = get_top_dir_group(&file.name, root);
+        groups.entry(group_name).or_insert_with(Vec::new).push(file);
+    }
+
+    groups
+        .into_iter()
+        .map(|(name, files)| FileGroup { name, files })
+        .collect()
+}
+
+pub fn get_top_dir_group<T>(file_path: T, root: &Path) -> String
+where
+    T: AsRef<Path>,
+{
+    let path = file_path.as_ref();
+    let relative = path.strip_prefix(root).unwrap_or(path);
+
+    let mut components = relative.components().filter_map(|comp| match comp {
+        std::path::Component::Normal(s) => Some(s.to_string_lossy().to_string()),
+        _ => None,
+    });
+
+    let first = components.next();
+    let has_more = components.next().is_some();
+
+    match (first, has_more) {
+        (Some(dir), true) => dir, // 文件在子目录里，取顶层目录名
+        _ => "root".to_string(),  // 文件在项目根目录
     }
 }
 
