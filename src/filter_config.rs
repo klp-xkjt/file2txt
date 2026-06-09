@@ -203,11 +203,10 @@ pub const DEFAULT_EXTENSIONS: &[&str] = &[
 // 过滤的类型
 pub enum FilterDecision {
     Keep,           // 保留
-    ExcludeDir,     // 以目录排除
     ExcludeExt,     // 以后缀名排除
     ExcludeSize,    // 以文件大小排除
     ExcludeNotFile, // 以是否为二进制或者非文件排除
-    ExcludeName // 以是否为指定名称排除
+    ExcludeName,    // 以是否为指定名称排除
 }
 
 use std::path::Path as StdPath;
@@ -216,7 +215,7 @@ pub struct FilterConfig {
     pub extensions: Vec<String>,
     pub exclude_dirs: Vec<String>,
     pub max_size: u64,
-    pub exclude_names: Vec<String>
+    pub exclude_names: Vec<String>,
 }
 impl FilterConfig {
     // 创建默认配置
@@ -229,7 +228,7 @@ impl FilterConfig {
                 "node_modules".to_string(),
             ],
             max_size: 1024 * 1024, // 1MB
-            exclude_names: Vec::new()
+            exclude_names: Vec::new(),
         }
     }
 
@@ -244,7 +243,7 @@ impl FilterConfig {
                 path.ends_with(exclude_path)
             } else {
                 path.components()
-                .any(|comp| &comp.as_os_str().to_string_lossy().to_string() == exclude)
+                    .any(|comp| &comp.as_os_str().to_string_lossy().to_string() == exclude)
             }
         })
     }
@@ -252,36 +251,34 @@ impl FilterConfig {
     // 判断是否符合要求
     pub fn decide(&self, entry: &walkdir::DirEntry) -> FilterDecision {
         let path = entry.path();
-    
+
         if !entry.file_type().is_file() {
             return FilterDecision::ExcludeNotFile;
         }
-    
+
         // ── 1. 黑名单：按文件名排除（无论有没有扩展名）──
         // ── 黑名单检查（放在最前面）──
-        let name = path.file_name()
-            .and_then(|n| n.to_str())
-    .unwrap_or("");
+        let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
-    if self.exclude_names.iter().any(|x| {
-        if x.contains('/') || x.contains('\\') {
-        // 子目录文件名匹配，如 "src/readme.md"
-        path.ends_with(StdPath::new(x))
-        } else {
-        // 简单文件名匹配，如 "LICENSE"
-        x == name
+        if self.exclude_names.iter().any(|x| {
+            if x.contains('/') || x.contains('\\') {
+                // 子目录文件名匹配，如 "src/readme.md"
+                path.ends_with(StdPath::new(x))
+            } else {
+                // 简单文件名匹配，如 "LICENSE"
+                x == name
+            }
+        }) {
+            return FilterDecision::ExcludeName;
         }
-    }) {
-        return FilterDecision::ExcludeName;
-    }
-    
+
         // ── 2. 扩展名过滤 ──
         if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
             if !self.extensions.is_empty() && !self.extensions.contains(&ext.to_string()) {
                 return FilterDecision::ExcludeExt;
             }
         }
-    
+
         // ── 3. 大小过滤 ──
         if self.max_size > 0 {
             if let Ok(meta) = entry.metadata() {

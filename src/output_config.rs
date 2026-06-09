@@ -1,8 +1,8 @@
 use crate::CollectStats;
 use crate::File;
+use crate::error::File2txtError;
 
 use serde_json;
-use std::error::Error;
 use std::path::Path;
 
 // 文件输出格式
@@ -31,7 +31,7 @@ pub fn generate_output(
     files: &[File],
     stats: &CollectStats,
     config: &OutputConfig,
-) -> Result<String, Box<dyn Error>> {
+) -> Result<String, File2txtError> {
     match config.format {
         OutputFormat::Normal => Ok(generate_normal_output(files)),
         OutputFormat::Meta => Ok(generate_meta_output(files, stats)),
@@ -86,7 +86,7 @@ fn generate_json_output(
     files: &[File],
     stats: &CollectStats,
     pretty: bool,
-) -> Result<String, Box<dyn Error>> {
+) -> Result<String, File2txtError> {
     let data = serde_json::json!({
         "stats": {
             "all_processed": stats.all_processed,

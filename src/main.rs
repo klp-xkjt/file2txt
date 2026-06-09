@@ -1,6 +1,8 @@
+use anyhow::Context;
 use clap::Parser;
 use file2txt::*;
 use std::fs;
+use std::time::Instant;
 
 #[derive(Parser)]
 struct Cli {
@@ -39,7 +41,8 @@ struct Cli {
     to_path: Option<String>,
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> anyhow::Result<()> {
+    let start = Instant::now();
     let cli = Cli::parse();
 
     // 解析输出格式
@@ -48,10 +51,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "meta" => OutputFormat::Meta,
         "markdown" | "md" => OutputFormat::Markdown,
         "json" => OutputFormat::Json,
-        _ => {
-            eprintln!("警告: 未知格式 '{}'，使用默认格式 normal", cli.format);
-            OutputFormat::Normal
-        }
+        other => return Err(File2txtError::UnknownFormat(other.into()).into()),
     };
 
     let output_config = OutputConfig {
@@ -78,7 +78,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 解析过滤文件名
     let exclude_name = match cli.exclude_name {
         Some(x) => x,
-        None => Vec::new()
+        None => Vec::new(),
     };
 
     // 获得过滤后信息统计
@@ -86,9 +86,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         extensions,
         exclude_dirs,
         max_size: cli.max_size * 1024,
-        exclude_names: exclude_name
+        exclude_names: exclude_name,
     };
-    let (files, stats) = collect_files_in(&cli.path, &filter)?;
+    let (files, stats) = collect_files_in(&cli.path, &filter).context("收集文件时出错")?;
 
     println!("📊 统计信息:");
     println!(
@@ -117,9 +117,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let output_path = Path::new(&output).join(&cli.output);
     let output_path_str = output_path.to_string_lossy().to_string();
 
-    let content = generate_output(&files, &stats, &output_config)?;
-    fs::write(&output_path_str, content)?;
+    let content = generate_output(&files, &stats, &output_config).context("生成输出内容时出错")?;
+    fs::write(&output_path_str, content).context("写入输出文件失败")?;
     println!("\n✅ 已保存到: {}", output_path_str);
+    println!("⏱ 耗时: {:.2?}", start.elapsed());
 
     Ok(())
 }

@@ -1,19 +1,28 @@
 use file2txt::*;
-use std::path::Path;
+use std::fs;
 use walkdir::WalkDir;
 
 #[test]
 fn test_should_skip_dir_pure() {
     let config = FilterConfig::default();
 
-    // 直接拼路径，不检查是否真实存在
-    assert!(!config.should_skip_dir(Path::new("/some/project/.git")));
-    assert!(!config.should_skip_dir(Path::new("/some/project/target")));
-    assert!(!config.should_skip_dir(Path::new("/some/project/node_modules")));
-    // 子目录名匹配也会跳过
-    assert!(!config.should_skip_dir(Path::new("/some/project/.git/hooks")));
+    let tmp = std::env::temp_dir().join("file2txt_test_skip");
+    let _ = fs::remove_dir_all(&tmp); // 清理上次残留
+    fs::create_dir_all(tmp.join(".git/hooks")).unwrap();
+    fs::create_dir_all(tmp.join("target")).unwrap();
+    fs::create_dir_all(tmp.join("node_modules")).unwrap();
+    fs::create_dir_all(tmp.join("src")).unwrap();
+
+    // 这些应该被跳过
+    assert!(config.should_skip_dir(&tmp.join(".git")));
+    assert!(config.should_skip_dir(&tmp.join(".git/hooks")));
+    assert!(config.should_skip_dir(&tmp.join("target")));
+    assert!(config.should_skip_dir(&tmp.join("node_modules")));
     // 普通目录不跳过
-    assert!(!config.should_skip_dir(Path::new("/some/project/src")));
+    assert!(!config.should_skip_dir(&tmp.join("src")));
+
+    // 清理
+    fs::remove_dir_all(&tmp).unwrap();
 }
 
 #[test]
