@@ -5,7 +5,7 @@
 [![Release](https://img.shields.io/github/v/release/klp-xkjt/file2txt)](https://github.com/klp-xkjt/file2txt/releases)
 
 将任意目录下的所有文本文件递归聚合为单个文件，支持过滤、多格式输出，方便 AI 分析与代码审查。
-项目使用 Rust 编写，
+项目使用 Rust 编写。
 
 ## 安装
 
