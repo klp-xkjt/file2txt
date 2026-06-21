@@ -3,6 +3,7 @@
 [![Rust](https://img.shields.io/badge/rust-stable-orange.svg)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/klp-xkjt/file2txt)](https://github.com/klp-xkjt/file2txt/releases)
+[![GitHub repo](https://img.shields.io/badge/GitHub-klp--xkjt/file2txt-blue?logo=github)](https://github.com/klp-xkjt/file2txt)
 
 将任意目录下的所有文本文件递归聚合为单个文件，支持过滤、多格式输出，方便 AI 分析与代码审查。
 项目使用 Rust 编写。
@@ -211,4 +212,4 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-见 [LICENSE](License) 文件。
+见 [LICENSE](https://github.com/klp-xkjt/file2txt/blob/main/License) 文件。
