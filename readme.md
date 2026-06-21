@@ -1,6 +1,11 @@
 # File2TXT
 
-将当前目录下的所有文本文件内容聚合到一个文件，方便喂给 AI 分析或代码审查。
+[![Rust](https://img.shields.io/badge/rust-stable-orange.svg)](https://www.rust-lang.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/klp-xkjt/file2txt)](https://github.com/klp-xkjt/file2txt/releases)
+
+将任意目录下的所有文本文件递归聚合为单个文件，支持过滤、多格式输出，方便 AI 分析与代码审查。
+项目使用 Rust 编写，
 
 ## 安装
 
@@ -43,7 +48,7 @@ file2txt
 | 参数 | 说明 | 示例 |
 |------|------|------|
 | `-o, --output` | 输出文件名（默认：`output.txt`） | `file2txt -o bundle.txt` |
-| `-e, --ext` | 只处理指定扩展名（逗号分隔） | `file2txt -e rs,toml,md` |
+| `-e, --extensions` | 只处理指定扩展名（逗号分隔） | `file2txt -e rs,toml,md` |
 | `-m, --max-size` | 最大文件大小，单位 KB（默认：1024） | `file2txt -m 1024` |
 | `-d, --exclude_dirs` | 指定排除哪些目录（命令运行的同级目录）(逗号分隔，例如 --exclude_dirs .git,node_modules,target) 不指定时默认排除 .git node_modules target | `file2txt -d target` |
 | `-f, --format` | 指定输出文件格式：normal(默认), meta(带有元数据的), markdown(Markdown格式), json(Json格式) | `file2txt -f meta` |
@@ -78,7 +83,7 @@ file2txt -t D:\backup
 
 # 指定排除文件，支持排除子目录文件
 file2txt -n Cargo.lock
-file2txt -d tests/test0.rs
+file2txt -n tests/test0.rs
 
 # 组合使用
 file2txt -o my_code_backup.md -m 512 -e rs,toml,md -f markdown -p E:\Rust\my_project -t D:\backup -n License
@@ -161,3 +166,49 @@ file2txt -o my_code_backup.md -m 512 -e rs,toml,md -f markdown -p E:\Rust\my_pro
 ## 📄 src\main.rs
 [文件内容]
 ```
+
+## License
+
+本项目基于 **MIT License** 开源。
+
+### 说明
+
+你可以：
+- ✅ **商业使用** —— 可以用在商业项目中
+- ✅ **修改源码** —— 自由修改、适配
+- ✅ **分发代码** —— 可以分享给别人
+- ✅ **私有使用** —— 个人或内部使用完全允许
+
+你必须：
+- 📌 **保留版权声明** —— 在分发或修改后的代码中保留原作者版权信息
+
+你不能：
+- ❌ **追究作者责任** —— 本软件按"原样"提供，作者不承担任何使用风险
+- ❌ **使用作者名义推广** —— 未经许可，不得用作者名义做宣传
+
+### 原文件
+```
+MIT License
+
+Copyright (c) 2026 klp-xkjt
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+见 [LICENSE](LICENSE) 文件。

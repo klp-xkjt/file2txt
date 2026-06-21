@@ -66,9 +66,11 @@ fn generate_meta_output(files: &[File], stats: &CollectStats) -> String {
 
     for file in files {
         let path = Path::new(&file.name);
+
         let size = file.content.len();
         let lines = file.content.lines().count();
         let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("none");
+
         output.push_str(&format!(
             "// 大小: {} 字节 | 行数: {} | 类型: {}\n",
             size, lines, ext

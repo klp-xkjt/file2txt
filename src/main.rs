@@ -1,7 +1,9 @@
 use anyhow::Context;
 use clap::Parser;
+use colored::Colorize;
 use file2txt::*;
 use std::fs;
+use std::path::Path;
 use std::time::Instant;
 
 #[derive(Parser)]
@@ -39,11 +41,16 @@ struct Cli {
     /// 指定输出目录，默认在遍历的目录（即 path 目录）
     #[arg(short = 't', long)]
     to_path: Option<String>,
+
+    /// Debug
+    #[arg(long, default_value = "false")]
+    debug: bool,
 }
 
 fn main() -> anyhow::Result<()> {
     let start = Instant::now();
     let cli = Cli::parse();
+    let path = cli.path.clone();
 
     // 解析输出格式
     let format = match cli.format.as_str() {
@@ -88,32 +95,62 @@ fn main() -> anyhow::Result<()> {
         max_size: cli.max_size * 1024,
         exclude_names: exclude_name,
     };
+
+    println!("{}", "🔍 正在扫描文件...".cyan().bold());
     let (files, stats) = collect_files_in(&cli.path, &filter).context("收集文件时出错")?;
 
-    println!("📊 统计信息:");
+    println!("\n{}", "📊 统计信息:".green().bold());
     println!(
-        "    已跳过目录: {} ({})",
-        filter.exclude_dirs.len(),
-        filter.exclude_dirs.join(", ")
+        "    {} {}",
+        "已跳过目录:".bright_yellow().bold(),
+        format!("[{}]", filter.exclude_dirs.join(", ")).bright_blue()
     );
-    println!("    扫描总数: {}", stats.all_processed);
-    println!("    包含文件: {}", stats.included);
-    println!("    排除总数: {}", stats.all_processed - stats.included);
-    println!("    ├─ 扩展名排除: {}", stats.excluded_by_ext);
     println!(
-        "    ├─ 大小排除 (>{}KB): {}",
-        cli.max_size, stats.excluded_by_size
+        "    {} {}",
+        "扫描总数:".bright_yellow().bold(),
+        stats.all_processed.to_string().bright_cyan()
     );
-    println!("    ├─ 名称排除: {}", stats.exclude_by_name);
-    println!("    └─ 二进制或非文件: {}", stats.exclude_by_not_file);
+    println!(
+        "    {} {}",
+        "包含文件:".bright_yellow().bold(),
+        stats.included.to_string().bright_green().bold()
+    );
+    println!(
+        "    {} {}",
+        "排除总数:".bright_yellow().bold(),
+        (stats.all_processed - stats.included)
+            .to_string()
+            .bright_red()
+    );
+    println!(
+        "    │  ├─ 扩展名排除: {}",
+        stats.excluded_by_ext.to_string().bright_purple()
+    );
+    println!(
+        "    │  ├─ 大小排除 (>{}KB): {}",
+        cli.max_size.to_string().bright_cyan(),
+        stats.excluded_by_size.to_string().bright_purple()
+    );
+    println!(
+        "    │  ├─ 名称排除: {}",
+        stats.exclude_by_name.to_string().bright_purple()
+    );
+    println!(
+        "    │  └─ 二进制或非文件: {}",
+        stats.exclude_by_not_file.to_string().bright_purple()
+    );
 
-    #[cfg(debug_assertions)]
-    let root_dir = cli.path.clone();
+    // 如果包含文件数为 0，给出警告
+    if stats.included == 0 {
+        println!(
+            "\n{}",
+            "⚠️  警告: 没有找到符合条件的文件！".bright_red().bold()
+        );
+    }
 
-    use std::path::Path;
     let output = match cli.to_path {
         Some(path) => path,
-        None => cli.path,
+        None => path,
     };
 
     // 构建输出路径：to_path + 基本文件名
@@ -125,11 +162,17 @@ fn main() -> anyhow::Result<()> {
     println!("\n✅ 已保存到: {}", output_path_str);
     println!("⏱ 耗时: {:.2?}", start.elapsed());
 
-    #[cfg(debug_assertions)]
-    {
+    let root_dir = cli.path.clone();
+    if cli.debug {
         let groups = group_by_top_dir(files, Path::new(&root_dir));
+        println!("\n{}", "📁 目录分组:".cyan().bold());
         for group in &groups {
-            println!("📁 {}: {} 个文件", group.name, group.files.len());
+            println!(
+                "{} {} {}",
+                "📂".bright_blue(),
+                group.name.bright_green().bold(),
+                format!("({} 个文件)", group.files.len()).bright_black()
+            );
         }
     }
     Ok(())
