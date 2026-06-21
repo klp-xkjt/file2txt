@@ -1,1 +1,0 @@
-This sentence from file2txt-tests/never.txt will never be read.
