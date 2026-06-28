@@ -14,7 +14,7 @@ use std::io::Write;
 use std::path::Path;
 use walkdir::WalkDir;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct CollectStats {
     pub all_processed: usize,       // 总扫描的数量
     pub included: usize,            // 最终包含的文件数量
@@ -22,18 +22,6 @@ pub struct CollectStats {
     pub excluded_by_size: usize,    // 以文件大小排除的文件数
     pub exclude_by_not_file: usize, // 排除的二进制文件或其他不是文件的数量
     pub exclude_by_name: usize,     // 以文件名排除的文件数
-}
-impl Default for CollectStats {
-    fn default() -> Self {
-        Self {
-            all_processed: 0,
-            included: 0,
-            excluded_by_ext: 0,
-            excluded_by_size: 0,
-            exclude_by_not_file: 0,
-            exclude_by_name: 0,
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -50,11 +38,7 @@ impl File {
     pub fn from_path(path: &Path) -> Result<Self, File2txtError> {
         let name = path.to_string_lossy().to_string();
         let content = fs::read_to_string(path)?;
-        let dir = path
-            .parent()
-            .unwrap_or_else(|| path)
-            .to_string_lossy()
-            .to_string();
+        let dir = path.parent().unwrap_or(path).to_string_lossy().to_string();
         Ok(Self { name, content, dir })
     }
 }
@@ -70,7 +54,7 @@ pub fn group_by_top_dir(files: Vec<File>, root: &Path) -> Vec<FileGroup> {
 
     for file in files {
         let group_name = get_top_dir_group(&file.name, root);
-        groups.entry(group_name).or_insert_with(Vec::new).push(file);
+        groups.entry(group_name).or_default().push(file);
     }
 
     groups

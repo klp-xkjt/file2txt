@@ -46,13 +46,13 @@ impl<'a> DebugConfig<'a> {
                 .extension()
                 .and_then(|e| e.to_str())
                 .unwrap_or("无扩展名");
-            *file_type
+            let _ = file_type
                 .entry(ext.to_string())
                 .and_modify(|count| *count += 1)
                 .or_insert(1);
         }
         let mut file_type_dist: Vec<(String, usize)> = file_type.into_iter().collect();
-        file_type_dist.sort_by(|a, b| b.1.cmp(&a.1)); // 按数量降序
+        file_type_dist.sort_by_key(|b| std::cmp::Reverse(b.1)); // 按数量降序
         let total_files = self.files.len();
 
         // ── 3. 代码量统计 ──
@@ -74,11 +74,7 @@ impl<'a> DebugConfig<'a> {
             }
         }
 
-        let avg_lines = if total_files > 0 {
-            total_lines / total_files
-        } else {
-            0
-        };
+        let avg_lines = total_lines.checked_div(total_files).unwrap_or(0);
 
         // ── 4. 过滤规则 ──
         let mut existing_dirs = Vec::new();
@@ -205,10 +201,7 @@ impl<'a> DebugConfig<'a> {
         output.push_str("# File2TXT 调试报告\n\n");
 
         // 元信息
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
+        let now = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
         output.push_str(&format!("> 生成时间：{}\n", now));
         output.push_str(&format!("> 扫描目录：`{}`\n", self.root.display()));
         output.push_str(&format!("> 总文件数：{}\n\n", stats.total_files));

@@ -92,13 +92,11 @@ pub const DEFAULT_EXTENSIONS: &[&str] = &[
     "rpy",
     "ipynb",
     "pyproject",
-    "toml",
     "requirements",
     // Go
     "go",
     "mod",
     "sum",
-    "go",
     "work",
     "tmpl",
     // C / C++ / 系统
@@ -139,7 +137,6 @@ pub const DEFAULT_EXTENSIONS: &[&str] = &[
     "gvy",
     "gy",
     // Rust
-    "rs",
     "rlib",
     "depend",
     // .NET / C# / F#
@@ -185,7 +182,6 @@ pub const DEFAULT_EXTENSIONS: &[&str] = &[
     "dml",
     "prisma",
     "mongodb",
-    "graphql",
     // 日志 & 调试
     "log",
     "trace",
@@ -218,20 +214,6 @@ pub struct FilterConfig {
     pub exclude_names: Vec<String>,
 }
 impl FilterConfig {
-    // 创建默认配置
-    pub fn default() -> Self {
-        Self {
-            extensions: DEFAULT_EXTENSIONS.iter().map(|s| s.to_string()).collect(),
-            exclude_dirs: vec![
-                ".git".to_string(),
-                "target".to_string(),
-                "node_modules".to_string(),
-            ],
-            max_size: 1024 * 1024, // 1MB
-            exclude_names: Vec::new(),
-        }
-    }
-
     // 检查目录是否应该被跳过（不遍历）
     pub fn should_skip_dir(&self, path: &StdPath) -> bool {
         if !path.is_dir() {
@@ -273,20 +255,34 @@ impl FilterConfig {
         }
 
         // ── 2. 扩展名过滤 ──
-        if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-            if !self.extensions.is_empty() && !self.extensions.contains(&ext.to_string()) {
-                return FilterDecision::ExcludeExt;
-            }
+        if let Some(ext) = path.extension().and_then(|e| e.to_str())
+            && !self.extensions.is_empty()
+            && !self.extensions.contains(&ext.to_string())
+        {
+            return FilterDecision::ExcludeExt;
         }
 
         // ── 3. 大小过滤 ──
-        if self.max_size > 0 {
-            if let Ok(meta) = entry.metadata() {
-                if meta.len() > self.max_size {
-                    return FilterDecision::ExcludeSize;
-                }
-            }
+        if self.max_size > 0
+            && let Ok(meta) = entry.metadata()
+            && meta.len() > self.max_size
+        {
+            return FilterDecision::ExcludeSize;
         }
         FilterDecision::Keep
+    }
+}
+impl Default for FilterConfig {
+    fn default() -> Self {
+        Self {
+            extensions: DEFAULT_EXTENSIONS.iter().map(|s| s.to_string()).collect(),
+            exclude_dirs: vec![
+                ".git".to_string(),
+                "target".to_string(),
+                "node_modules".to_string(),
+            ],
+            max_size: 1024 * 1024, // 1MB
+            exclude_names: Vec::new(),
+        }
     }
 }

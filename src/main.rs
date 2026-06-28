@@ -87,10 +87,7 @@ fn main() -> anyhow::Result<()> {
     };
 
     // 解析过滤文件名
-    let exclude_name = match cli.exclude_name {
-        Some(x) => x,
-        None => Vec::new(),
-    };
+    let exclude_name = cli.exclude_name.unwrap_or_default();
 
     // 获得过滤后信息统计
     let filter = FilterConfig {
@@ -178,7 +175,10 @@ fn main() -> anyhow::Result<()> {
 
     debug.run()?;
 
-    println!("\n🦀 File2TXT v{} · Made by klp-xkjt", env!("CARGO_PKG_VERSION"));
+    println!(
+        "\n🦀 File2TXT v{} · Made by klp-xkjt",
+        env!("CARGO_PKG_VERSION")
+    );
     println!("🔗 {}", env!("CARGO_PKG_REPOSITORY"));
     Ok(())
 }

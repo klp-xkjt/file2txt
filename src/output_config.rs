@@ -2,7 +2,6 @@ use crate::CollectStats;
 use crate::File;
 use crate::error::File2txtError;
 
-use serde_json;
 use std::path::Path;
 
 // 文件输出格式
@@ -46,7 +45,6 @@ fn generate_normal_output(files: &[File]) -> String {
         output.push_str(&format!("--- {} ---\n", file.name));
         output.push_str(&file.content);
         output.push_str("\n\n");
-        output.push_str("BY File2TXT");
     }
 
     output
@@ -56,14 +54,14 @@ fn generate_meta_output(files: &[File], stats: &CollectStats) -> String {
     let mut output = String::new();
 
     // 添加统计信息头
-    output.push_str(&format!("<!--\n"));
+    output.push_str("<!--\n");
     output.push_str(&format!("扫描总数: {}\n", stats.all_processed));
     output.push_str(&format!("包含文件: {}\n", stats.included));
     output.push_str(&format!(
         "排除总数: {}\n",
         stats.all_processed - stats.included
     ));
-    output.push_str(&format!("-->\n\n"));
+    output.push_str("-->\n\n");
 
     for file in files {
         let path = Path::new(&file.name);
@@ -81,7 +79,6 @@ fn generate_meta_output(files: &[File], stats: &CollectStats) -> String {
         output.push_str(&file.content);
         output.push_str("\n\n");
     }
-    output.push_str("BY File2TXT");
     output
 }
 
@@ -157,7 +154,6 @@ fn generate_markdown_output(files: &[File], stats: &CollectStats) -> String {
         }
         output.push_str("```\n\n");
     }
-    output.push_str("BY File2TXT");
 
     output
 }
