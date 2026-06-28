@@ -42,9 +42,13 @@ struct Cli {
     #[arg(short = 't', long)]
     to_path: Option<String>,
 
-    /// Debug
+    /// Debug in Terminal
     #[arg(long, default_value = "false")]
     debug: bool,
+
+    /// Debug in File
+    #[arg(long, default_value = "false")]
+    debug_output: bool,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -96,6 +100,7 @@ fn main() -> anyhow::Result<()> {
         exclude_names: exclude_name,
     };
 
+    // 输出
     println!("{}", "🔍 正在扫描文件...".cyan().bold());
     let (files, stats) = collect_files_in(&cli.path, &filter).context("收集文件时出错")?;
 
@@ -160,20 +165,20 @@ fn main() -> anyhow::Result<()> {
     let content = generate_output(&files, &stats, &output_config).context("生成输出内容时出错")?;
     fs::write(&output_path_str, content).context("写入输出文件失败")?;
     println!("\n✅ 已保存到: {}", output_path_str);
-    println!("⏱ 耗时: {:.2?}", start.elapsed());
+    println!("⏱ 耗时: {:.3?}", start.elapsed());
 
-    let root_dir = cli.path.clone();
-    if cli.debug {
-        let groups = group_by_top_dir(files, Path::new(&root_dir));
-        println!("\n{}", "📁 目录分组:".cyan().bold());
-        for group in &groups {
-            println!(
-                "{} {} {}",
-                "📂".bright_blue(),
-                group.name.bright_green().bold(),
-                format!("({} 个文件)", group.files.len()).bright_black()
-            );
-        }
-    }
+    let debug = DebugConfig {
+        debug_in_terminal: cli.debug,
+        debug_output: cli.debug_output,
+        files: &files,
+        stats: &stats,
+        filter: &filter,
+        root: Path::new(&cli.path),
+    };
+
+    debug.run()?;
+
+    println!("\n🦀 File2TXT v{} · Made by klp-xkjt", env!("CARGO_PKG_VERSION"));
+    println!("🔗 {}", env!("CARGO_PKG_REPOSITORY"));
     Ok(())
 }

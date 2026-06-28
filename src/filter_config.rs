@@ -256,8 +256,8 @@ impl FilterConfig {
             return FilterDecision::ExcludeNotFile;
         }
 
-        // ── 1. 黑名单：按文件名排除（无论有没有扩展名）──
-        // ── 黑名单检查（放在最前面）──
+        // 1. 黑名单：按文件名排除（无论有没有扩展名）
+        // 黑名单检查（放在最前面）
         let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
         if self.exclude_names.iter().any(|x| {

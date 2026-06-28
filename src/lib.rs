@@ -4,6 +4,8 @@ mod output_config;
 pub use output_config::*;
 mod error;
 pub use error::*;
+mod debug_config;
+pub use debug_config::*;
 
 use rayon::prelude::*;
 use std::collections::HashMap;
@@ -34,7 +36,7 @@ impl Default for CollectStats {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct File {
     pub name: String,
     pub content: String,
@@ -106,6 +108,20 @@ pub fn collect_files_in<P>(
 where
     P: AsRef<Path>,
 {
+    let root_path = root.as_ref();
+    if !root_path.exists() {
+        return Err(File2txtError::InvalidPath(format!(
+            "目录不存在: {}",
+            root_path.display()
+        )));
+    }
+    if !root_path.is_dir() {
+        return Err(File2txtError::InvalidPath(format!(
+            "路径不是目录: {}",
+            root_path.display()
+        )));
+    }
+
     let mut entries_to_process = Vec::new();
     let mut stats = CollectStats::default();
 
@@ -129,10 +145,11 @@ where
         }
     }
 
-    let files: Vec<File> = entries_to_process
+    let mut files: Vec<File> = entries_to_process
         .par_iter()
         .filter_map(|path| File::from_path(path).ok())
         .collect();
+    files.sort_by(|a, b| a.name.cmp(&b.name));
 
     Ok((files, stats))
 }

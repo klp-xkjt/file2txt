@@ -46,6 +46,7 @@ fn generate_normal_output(files: &[File]) -> String {
         output.push_str(&format!("--- {} ---\n", file.name));
         output.push_str(&file.content);
         output.push_str("\n\n");
+        output.push_str("BY File2TXT");
     }
 
     output
@@ -80,7 +81,7 @@ fn generate_meta_output(files: &[File], stats: &CollectStats) -> String {
         output.push_str(&file.content);
         output.push_str("\n\n");
     }
-
+    output.push_str("BY File2TXT");
     output
 }
 
@@ -96,6 +97,7 @@ fn generate_json_output(
             "excluded_by_ext": stats.excluded_by_ext,
             "excluded_by_size": stats.excluded_by_size,
             "exclude_by_not_file": stats.exclude_by_not_file,
+            "exclude_by_name": stats.exclude_by_name
         },
         "files": files.iter().map(|file| {
             serde_json::json!({
@@ -155,6 +157,7 @@ fn generate_markdown_output(files: &[File], stats: &CollectStats) -> String {
         }
         output.push_str("```\n\n");
     }
+    output.push_str("BY File2TXT");
 
     output
 }
