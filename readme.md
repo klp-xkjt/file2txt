@@ -187,7 +187,7 @@ file2txt -o my_code_backup.md -m 512 -e rs,toml,md -f markdown -p E:\Rust\my_pro
 - ❌ **追究作者责任** —— 本软件按"原样"提供，作者不承担任何使用风险
 - ❌ **使用作者名义推广** —— 未经许可，不得用作者名义做宣传
 
-### 原文件
+### License
 ```
 MIT License
 
