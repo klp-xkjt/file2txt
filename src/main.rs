@@ -98,7 +98,7 @@ fn main() -> anyhow::Result<()> {
     };
 
     // 输出
-    println!("{}", "🔍 正在扫描文件...".cyan().bold());
+    println!("{}", "🔍 File2TXT正在扫描文件...".cyan().bold());
     let (files, stats) = collect_files_in(&cli.path, &filter).context("收集文件时出错")?;
 
     println!("\n{}", "📊 统计信息:".green().bold());
@@ -162,7 +162,7 @@ fn main() -> anyhow::Result<()> {
     let content = generate_output(&files, &stats, &output_config).context("生成输出内容时出错")?;
     fs::write(&output_path_str, content).context("写入输出文件失败")?;
     println!("\n✅ 已保存到: {}", output_path_str);
-    println!("⏱ 耗时: {:.3?}", start.elapsed());
+    println!("⏰ 耗时: {:.3?}", start.elapsed());
 
     let debug = DebugConfig {
         debug_in_terminal: cli.debug,

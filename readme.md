@@ -24,6 +24,9 @@
 3. **（推荐）** 重命名为 `file2txt`（或 `file2txt.exe`）以便使用
 4. 将文件放入 PATH 目录
 
+> 没有包括你所在的平台？可考虑通过方法三从源码编译！  
+> 如果你希望增加某个平台的预编译版本，欢迎 [提 Issue](https://github.com/klp-xkjt/file2txt/issues)！
+
 ### 方式二：通过 cargo 安装（需要 Rust 环境）
 
 ```bash
@@ -187,7 +190,7 @@ file2txt -o my_code_backup.md -m 512 -e rs,toml,md -f markdown -p E:\Rust\my_pro
 - ❌ **追究作者责任** —— 本软件按"原样"提供，作者不承担任何使用风险
 - ❌ **使用作者名义推广** —— 未经许可，不得用作者名义做宣传
 
-### 原文件
+### License
 ```
 MIT License
 
