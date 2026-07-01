@@ -24,6 +24,9 @@
 3. **（推荐）** 重命名为 `file2txt`（或 `file2txt.exe`）以便使用
 4. 将文件放入 PATH 目录
 
+> 没有包括你所在的平台？可考虑通过方法三从源码编译！  
+> 如果你希望增加某个平台的预编译版本，欢迎 [提 Issue](https://github.com/klp-xkjt/file2txt/issues)！
+
 ### 方式二：通过 cargo 安装（需要 Rust 环境）
 
 ```bash
